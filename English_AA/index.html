@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MANLONGAT, LOUISE GERARDINE C_INFERNO</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            cursor: url('image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="orange" stroke-width="2"/><line x1="12" y1="8" x2="12" y2="16" stroke="orange" stroke-width="2"/><line x1="8" y1="12" x2="16" y2="12" stroke="orange" stroke-width="2"/></svg>'), auto;
+        }
+        canvas {
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        .circle-link {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2;
+        }
+        #textBoxesContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+        }
+        #textBoxesContainer a {
+            pointer-events: auto;
+            position: absolute;
+            color: white;
+            font-family: 'Arial Black', sans-serif;
+            font-weight: bold;
+            text-shadow: 
+                0 0 8px #ff0,
+                0 0 16px #f80,
+                0 0 24px #f00;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            padding: 8px 16px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            font-size: 1.4em;
+        }
+        #textBoxesContainer a:hover {
+            transform: scale(1.2) translateY(-5px);
+            text-shadow: 
+                0 0 12px #fff,
+                0 0 24px #ff8,
+                0 0 36px #ff0,
+                0 0 48px #f80;
+            background: rgba(50,0,0,0.7);
+        }
+
+        /* Audio control toggle */
+        #audioToggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255,100,0,0.3);
+            border: 2px solid #ff5500;
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s;
+        }
+        #audioToggle:hover {
+            background: rgba(255,180,0,0.5);
+            transform: scale(1.1);
+        }
+
+        /* Audio enable prompt */
+        #audioPrompt {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: #ff3300;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 32px;
+            text-align: center;
+            cursor: pointer;
+            transition: opacity 0.5s ease;
+        }
+        #audioPrompt.hidden {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+        }
+       
+    </style>
+</head>
+<body>
+<canvas id="infernoCanvas"></canvas>
+<div id="textBoxesContainer"></div>
+<div id="audioToggle">🔊</div>
+
+
+
+<script>
+// 🔊 Generate terrifying sound with Web Audio API
+let audioContext;
+let isPlaying = false;
+let mainOscillators = [];
+let noiseSource = null;
+let gainNode = null;
+let delayNode = null;
+
+function createScarySound() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    stopScarySound();
+
+    gainNode = audioContext.createGain();
+    gainNode.gain.value = 1.0;
+
+    delayNode = audioContext.createDelay(2.0);
+    delayNode.delayTime.value = 0.6;
+    const feedback = audioContext.createGain();
+    feedback.gain.value = 0.3;
+    delayNode.connect(feedback);
+    feedback.connect(delayNode);
+    delayNode.connect(gainNode);
+
+    const osc1 = audioContext.createOscillator();
+    const osc2 = audioContext.createOscillator();
+    const osc1Gain = audioContext.createGain();
+    const osc2Gain = audioContext.createGain();
+
+    osc1.type = 'sawtooth';
+    osc2.type = 'square';
+    osc1.frequency.setValueAtTime(180 + Math.random() * 40, audioContext.currentTime);
+    osc2.frequency.setValueAtTime(220 + Math.random() * 30, audioContext.currentTime);
+
+    const lfo = audioContext.createOscillator();
+    const lfoGain = audioContext.createGain();
+    lfo.type = 'sine';
+    lfo.frequency.value = 0.3 + Math.random() * 0.4;
+    lfoGain.gain.value = 8 + Math.random() * 12;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+    lfo.start();
+
+    const tremolo = audioContext.createOscillator();
+    const tremoloGain = audioContext.createGain();
+    tremolo.type = 'sine';
+    tremolo.frequency.value = 5 + Math.random() * 8;
+    tremoloGain.gain.value = 0.7;
+    tremolo.connect(tremoloGain);
+    tremoloGain.connect(osc1Gain.gain);
+    tremolo.start();
+
+    const rumbleOsc = audioContext.createOscillator();
+    rumbleOsc.type = 'sine';
+    rumbleOsc.frequency.value = 30 + Math.random() * 20;
+    const rumbleGain = audioContext.createGain();
+    rumbleGain.gain.value = 0.2 + Math.random() * 0.3;
+    rumbleOsc.connect(rumbleGain);
+    rumbleGain.connect(gainNode);
+    rumbleOsc.start();
+
+    const noise = audioContext.createBufferSource();
+    const bufferSize = audioContext.sampleRate * 2;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const output = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+    }
+    noise.buffer = buffer;
+    noise.loop = true;
+    const noiseFilter = audioContext.createBiquadFilter();
+    noiseFilter.type = 'highpass';
+    noiseFilter.frequency.value = 800;
+    const noiseGain = audioContext.createGain();
+    noiseGain.gain.value = 0.15;
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(gainNode);
+    noise.start();
+
+    osc1.connect(osc1Gain);
+    osc2.connect(osc2Gain);
+    osc1Gain.connect(delayNode);
+    osc2Gain.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    osc1.start();
+    osc2.start();
+    noiseSource = noise;
+
+    mainOscillators = [osc1, osc2, lfo, tremolo, rumbleOsc];
+}
+
+function stopScarySound() {
+    if (mainOscillators.length) {
+        mainOscillators.forEach(osc => {
+            try { osc.stop(); } catch (e) {}
+        });
+        mainOscillators = [];
+    }
+    if (noiseSource) {
+        try { noiseSource.stop(); } catch (e) {}
+        noiseSource = null;
+    }
+    if (gainNode) {
+        gainNode.disconnect();
+        gainNode = null;
+    }
+}
+
+let audioUnlocked = false;
+const audioPrompt = document.getElementById('audioPrompt');
+
+function unlockAndInitAudio() {
+    if (audioUnlocked) return;
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        const buffer = audioContext.createBuffer(1, 1, 22050);
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start();
+    } catch (e) {
+        console.warn("Audio unlock failed silently");
+    }
+    audioUnlocked = true;
+    audioPrompt.classList.add('hidden');
+}
+
+document.body.addEventListener('pointerdown', unlockAndInitAudio, { once: true });
+document.body.addEventListener('keydown', unlockAndInitAudio, { once: true });
+
+// 🌀 CIRCLE ANIMATION CONTROL — NOW TRIGGERED BY TOGGLE
+let circleAnimationActive = false;
+let circleAnimationStartTime = null;
+const CIRCLE_ANIMATION_DURATION = 7000; // 7 seconds
+
+// 🎨 CANVAS SETUP
+const canvas = document.getElementById("infernoCanvas");
+const ctx = canvas.getContext("2d");
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+
+// Initialize circles at FINAL positions (no movement until triggered)
+const innerCircles = [
+    { x: centerX,     y: centerY - 140, radius: 75, originalRadius: 75, image: null, url: 'sin5.html', sinName: 'Sin 5' },
+    { x: centerX - 120, y: centerY - 40, radius: 70, originalRadius: 70, image: null, url: 'sin4.html', sinName: 'Sin 4' },
+    { x: centerX - 70, y: centerY + 100, radius: 65, originalRadius: 65, image: null, url: 'sin3.html', sinName: 'SIn 3' },
+    { x: centerX + 70, y: centerY + 100, radius: 60, originalRadius: 60, image: null, url: 'sin2.html', sinName: 'Sin 2' },
+    { x: centerX + 120, y: centerY - 40, radius: 55, originalRadius: 55, image: null, url: 'sin1.html', sinName: 'Sin 1' }
+];
+
+// Store target (final) positions
+innerCircles.forEach(circle => {
+    circle.targetX = circle.x;
+    circle.targetY = circle.y;
+    // Animation state (will be set on toggle click)
+    circle.startAngle = 0;
+    circle.currentAngle = 0;
+    circle.startRadius = 0;
+    circle.currentRadius = 0;
+});
+
+const imageUrls = [
+    'https://i.postimg.cc/GpkTZRsF/trendsinners.png',
+    'https://i.postimg.cc/CxTjmrWt/sinners-wounded-selfishness.png',
+    'https://i.postimg.cc/xTK5yw6X/enablersinners.png',
+    'https://i.postimg.cc/vmmDzWHK/sinners-blind-wisdom.png',
+    'https://i.postimg.cc/MHfPSX0h/feigned-helplessness-sinners.png'
+];
+
+innerCircles.forEach((circle, i) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = imageUrls[i].trim();
+    img.onload = () => { circle.image = img; };
+    img.onerror = () => console.warn(`❌ ${circle.sinName} image failed`);
+});
+
+innerCircles.forEach(c => {
+    const link = document.createElement('a');
+    link.href = c.url;
+    link.className = 'circle-link';
+    document.body.appendChild(link);
+    c.linkEl = link;
+    c.updateLink = () => {
+        link.style.width = link.style.height = (c.radius * 2) + 'px';
+        link.style.left = (c.x - c.radius) + 'px';
+        link.style.top = (c.y - c.radius) + 'px';
+    };
+});
+
+const textBoxesContainer = document.getElementById('textBoxesContainer');
+innerCircles.forEach(c => {
+    const a = document.createElement('a');
+    a.href = c.url;
+    a.innerText = c.sinName;
+    textBoxesContainer.appendChild(a);
+    c.textEl = a;
+    c.updateText = () => {
+        let left = c.x, top = c.y - c.radius - 45;
+        if (c.sinName === 'Lust') left -= 60;
+        else if (c.sinName === 'Gluttony') { left -= 30; top = c.y + c.radius + 10; }
+        else if (c.sinName === 'Greed') { left = c.x - c.radius - 40; top = c.y + 5; }
+        else if (c.sinName === 'Pride') { left = c.x + c.radius + 10; top = c.y - 20; }
+        a.style.left = `${left}px`;
+        a.style.top = `${top}px`;
+    };
+});
+
+// 🔥 Particles, demons — unchanged
+const particles = [];
+function createParticles() {
+    particles.length = 0;
+    for (let i = 0; i < 150; i++) {
+        const type = Math.random() > 0.7 ? 'smoke' : (Math.random() > 0.9 ? 'ash' : 'flame');
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height + canvas.height,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: -Math.random() * 1.5 - 0.3,
+            life: Math.random() * 80 + 20,
+            maxLife: 100,
+            size: Math.random() * 4 + 2,
+            type: type
+        });
+    }
+}
+createParticles();
+
+const demonFaces = [];
+for (let i = 0; i < 8; i++) {
+    demonFaces.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.6,
+        size: 80 + Math.random() * 60,
+        blinkPhase: Math.random() * Math.PI * 2,
+        grimace: Math.random() > 0.5,
+        appearTime: Math.random() * 10
+    });
+}
+
+function noise(x, y) {
+    return Math.sin(x * 0.1) * Math.cos(y * 0.13) + 
+           Math.sin(x * 0.23) * Math.cos(y * 0.17) + 
+           Math.sin(x * 0.31 + y * 0.29);
+}
+
+let vortexAngle = 0, flicker = 0, flickerDir = 1, time = 0;
+let mouseX = centerX, mouseY = centerY;
+document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+
+// 🌀 ANIMATION LOGIC: ONLY RUNS AFTER TOGGLE CLICK
+function updateCircleAnimation() {
+    if (!circleAnimationActive) return;
+
+    const now = performance.now();
+    if (circleAnimationStartTime === null) {
+        circleAnimationStartTime = now;
+        // Initialize animation state
+        innerCircles.forEach(c => {
+            c.startAngle = Math.atan2(c.y - centerY, c.x - centerX);
+            c.currentAngle = c.startAngle;
+            c.startRadius = Math.hypot(c.x - centerX, c.y - centerY);
+        });
+    }
+
+    const elapsed = now - circleAnimationStartTime;
+    if (elapsed >= CIRCLE_ANIMATION_DURATION) {
+        // Lock to final positions
+        innerCircles.forEach(c => {
+            c.x = c.targetX;
+            c.y = c.targetY;
+        });
+        circleAnimationActive = false;
+        circleAnimationStartTime = null;
+        return;
+    }
+
+    const progress = elapsed / CIRCLE_ANIMATION_DURATION;
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out
+
+    innerCircles.forEach(c => {
+        // Spiral inward: radius shrinks toward final distance
+        const finalRadius = Math.hypot(c.targetX - centerX, c.targetY - centerY);
+        c.currentRadius = c.startRadius * (1 - eased) + finalRadius * eased;
+        // Rotate clockwise
+        c.currentAngle = c.startAngle + eased * Math.PI * 4; // 2 full clockwise turns
+
+        c.x = centerX + Math.cos(c.currentAngle) * c.currentRadius;
+        c.y = centerY + Math.sin(c.currentAngle) * c.currentRadius;
+    });
+}
+
+// Rest of draw functions — unchanged except for calling updateCircleAnimation()
+function drawBackground() {
+    time += 0.02; vortexAngle += 0.001;
+    const vortexCenterX = centerX + Math.sin(time * 0.3) * 50;
+    const vortexCenterY = centerY + Math.cos(time * 0.25) * 40;
+    const vortexGrad = ctx.createRadialGradient(vortexCenterX, vortexCenterY, 50, vortexCenterX, vortexCenterY, canvas.width);
+    vortexGrad.addColorStop(0, `rgba(30,0,0,0.9)`);
+    vortexGrad.addColorStop(0.6, `rgba(80,0,0,0.7)`);
+    vortexGrad.addColorStop(1, `rgba(5,0,0,1)`);
+    ctx.fillStyle = vortexGrad;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    ctx.globalAlpha = 0.08;
+    for (let y = 0; y < canvas.height * 0.7; y += 12) {
+        for (let x = 0; x < canvas.width; x += 12) {
+            const n = noise(x + time * 15, y + time * 8) * 0.5 + 0.5;
+            let shade = 15 + n * 10;
+            let nearDemon = demonFaces.some(d => {
+                const dx = x - d.x, dy = y - d.y;
+                return Math.sqrt(dx*dx + dy*dy) < d.size * 0.6;
+            });
+            if (nearDemon) shade *= 0.6;
+            ctx.fillStyle = `hsl(${10 + n * 20}, 50%, ${shade}%)`;
+            ctx.fillRect(x, y, 12, 12);
+        }
+    }
+    ctx.globalAlpha = 1;
+
+    demonFaces.forEach(d => {
+        const appear = Math.sin(time - d.appearTime) * 0.5 + 0.5;
+        if (appear < 0.1) return;
+        ctx.save(); ctx.translate(d.x, d.y); ctx.globalAlpha = appear * 0.7;
+        const blink = Math.sin(time * 3 + d.blinkPhase) > 0.8 ? 0 : 1;
+        ctx.fillStyle = '#ff2200';
+        ctx.beginPath();
+        ctx.arc(-d.size * 0.2, -d.size * 0.15, d.size * 0.12 * blink, 0, Math.PI * 2);
+        ctx.arc(d.size * 0.2, -d.size * 0.15, d.size * 0.12 * blink, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#aa0000'; ctx.lineWidth = 3;
+        ctx.beginPath();
+        if (d.grimace) ctx.arc(0, d.size * 0.1, d.size * 0.2, Math.PI * 0.1, Math.PI * 0.9);
+        else ctx.moveTo(-d.size * 0.25, d.size * 0.05), ctx.quadraticCurveTo(0, d.size * 0.25, d.size * 0.25, d.size * 0.05);
+        ctx.stroke(); ctx.restore();
+    });
+
+    const lavaHeight = canvas.height * 0.25;
+    const lavaGrad = ctx.createLinearGradient(0, canvas.height - lavaHeight, 0, canvas.height);
+    lavaGrad.addColorStop(0, 'rgba(220,30,0,0.2)');
+    lavaGrad.addColorStop(0.4, 'rgba(255,60,0,0.5)');
+    lavaGrad.addColorStop(1, 'rgba(255,120,0,0.85)');
+    ctx.fillStyle = lavaGrad;
+    ctx.fillRect(0, canvas.height - lavaHeight, canvas.width, lavaHeight);
+
+    ctx.strokeStyle = 'rgba(255,180,0,0.3)'; ctx.lineWidth = 2;
+    for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        const y = canvas.height - lavaHeight + Math.sin(time * 2.5 + i) * 18 + i * 30;
+        ctx.moveTo(0, y);
+        for (let x = 0; x <= canvas.width; x += 25) {
+            const yOffset = Math.sin(x * 0.03 + time * 3.5 + i) * 10;
+            ctx.lineTo(x, y + yOffset);
+        }
+        ctx.stroke();
+    }
+
+    const coreGlow = ctx.createRadialGradient(centerX, centerY, 100, centerX, centerY, 500);
+    coreGlow.addColorStop(0, `rgba(255,100,0,${0.35 + Math.sin(time * 2) * 0.08})`);
+    coreGlow.addColorStop(0.8, 'rgba(150,10,0,0.05)');
+    coreGlow.addColorStop(1, 'transparent');
+    ctx.fillStyle = coreGlow;
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    particles.forEach(p => {
+        const age = 1 - p.life / p.maxLife;
+        let r,g,b,a;
+        if (p.type === 'flame') { r=255; g=200-age*120; b=40; a=0.7-age*0.5; p.size=3+age*5; }
+        else if (p.type === 'smoke') { r=g=b=20+age*50; a=0.08+age*0.15; p.size=10+age*15; p.vx*=0.98; }
+        else { r=60; g=40; b=10; a=0.25-age*0.2; p.size=2+age*2; }
+        ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+        ctx.fillStyle = `rgba(${r},${g},${b},${a})`; ctx.fill();
+        p.x += p.vx; p.y += p.vy; p.life--;
+        if (p.life <= 0) {
+            p.x = Math.random() * canvas.width;
+            p.y = canvas.height + 10;
+            p.life = p.maxLife;
+            p.type = Math.random() > 0.7 ? 'smoke' : (Math.random() > 0.9 ? 'ash' : 'flame');
+        }
+    });
+}
+
+function drawOuterCircle() {
+    ctx.beginPath(); ctx.arc(centerX, centerY, 230, 0, Math.PI * 2);
+    const ringGrad = ctx.createRadialGradient(centerX, centerY, 200, centerX, centerY, 270);
+    ringGrad.addColorStop(0, 'rgba(70,0,0,0.7)');
+    ringGrad.addColorStop(0.7, 'rgba(200,40,0,0.95)');
+    ringGrad.addColorStop(1, 'transparent');
+    ctx.fillStyle = ringGrad; ctx.fill();
+    flicker += 0.8 * flickerDir;
+    if (flicker > 45 || flicker < -25) flickerDir *= -1;
+    ctx.strokeStyle = `rgba(255,${160 + flicker},0,1)`;
+    ctx.lineWidth = 8;
+    ctx.shadowColor = `rgba(255,80,0,0.9)`;
+    ctx.shadowBlur = 45 + Math.sin(time * 3) * 12;
+    ctx.stroke(); ctx.shadowBlur = 0;
+    ctx.strokeStyle = '#220000'; ctx.lineWidth = 2;
+    for (let i = 0; i < 14; i++) {
+        ctx.beginPath();
+        const a = (i / 14) * Math.PI * 2 + time * 0.07;
+        let x = centerX + Math.cos(a) * (230 * 0.65);
+        let y = centerY + Math.sin(a) * (230 * 0.65);
+        ctx.moveTo(x, y);
+        for (let j = 0; j < 10; j++) {
+            const ang = a + (Math.random() - 0.5) * 2;
+            const len = 12 + Math.random() * 25;
+            x += Math.cos(ang) * len; y += Math.sin(ang) * len;
+            ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+    }
+}
+
+function drawInnerCircles() {
+    // ✅ Only animate if active
+    updateCircleAnimation();
+
+    innerCircles.forEach(c => {
+        const dx = mouseX - c.x, dy = mouseY - c.y;
+        const isHover = Math.sqrt(dx*dx + dy*dy) < c.radius * 1.4;
+        c.radius = isHover ? c.originalRadius * 1.35 : c.originalRadius;
+        c.updateLink(); c.updateText();
+        ctx.save(); ctx.beginPath(); ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2); ctx.clip();
+        if (c.image) ctx.drawImage(c.image, c.x - c.radius, c.y - c.radius, c.radius*2, c.radius*2);
+        else {
+            const g = ctx.createRadialGradient(c.x, c.y, 5, c.x, c.y, c.radius);
+            g.addColorStop(0, "#ffd500"); g.addColorStop(0.6, "#ff5500"); g.addColorStop(1, "#aa0000");
+            ctx.fillStyle = g; ctx.fill();
+        }
+        ctx.restore();
+        ctx.beginPath(); ctx.arc(c.x, c.y, c.radius, 0, Math.PI * 2);
+        ctx.lineWidth = isHover ? 9 : 6;
+        ctx.strokeStyle = isHover ? "#ffcc00" : "#ff8800";
+        ctx.shadowColor = isHover ? "#ff7700" : "#ff4400";
+        ctx.shadowBlur = isHover ? 50 : 30;
+        ctx.stroke(); ctx.shadowBlur = 0;
+        const flameCount = isHover ? 14 : 10;
+        for (let i = 0; i < flameCount; i++) {
+            const angle = (i / flameCount) * Math.PI * 2 + time * 1.8;
+            const baseX = c.x + Math.cos(angle) * (c.radius + 5);
+            const baseY = c.y + Math.sin(angle) * (c.radius + 5);
+            ctx.beginPath(); ctx.moveTo(baseX, baseY);
+            const tipX = baseX + Math.cos(angle + Math.sin(time + i) * 0.6) * (28 + Math.sin(time * 2.5 + i) * 12);
+            const tipY = baseY + Math.sin(angle + Math.sin(time + i) * 0.6) * (28 + Math.sin(time * 2.5 + i) * 12) - 18;
+            ctx.quadraticCurveTo(baseX + Math.cos(angle + 0.4) * 20, baseY - 12, tipX, tipY);
+            const alpha = 0.7 + Math.sin(time * 6 + i) * 0.25;
+            ctx.strokeStyle = `rgba(255,${190 + Math.sin(time + i) * 25},0,${alpha})`;
+            ctx.lineWidth = isHover ? 4 : 3;
+            ctx.stroke();
+        }
+    });
+}
+
+function drawText() {
+    ctx.textAlign = "center";
+    ctx.font = "bold 110px 'Arial Black', sans-serif";
+    const flick = 0.75 + Math.sin(time * 4.5) * 0.25;
+    ctx.fillStyle = `rgba(255,${190 * flick},50,1)`;
+    ctx.shadowColor = `rgba(255,100,0,1)`;
+    ctx.shadowBlur = 70;
+    ctx.fillText("INFERNO", centerX, centerY - 250);
+    ctx.shadowBlur = 0;
+}
+
+function animate() {
+    drawBackground();
+    drawOuterCircle();
+    drawInnerCircles();
+    drawText();
+    requestAnimationFrame(animate);
+}
+
+setTimeout(() => animate(), 100);
+
+// 🎛️ AUDIO TOGGLE — NOW TRIGGERS ANIMATION
+const audioToggle = document.getElementById('audioToggle');
+audioToggle.addEventListener('click', () => {
+    if (!audioUnlocked) {
+        alert("Please click anywhere first to enable audio.");
+        return;
+    }
+
+    if (!isPlaying) {
+        // Start sound
+        try {
+            createScarySound();
+            isPlaying = true;
+            audioToggle.textContent = '🔇';
+            audioToggle.style.background = 'rgba(200,50,0,0.5)';
+
+            // 🌀 START CIRCLE ANIMATION (only once)
+            if (!circleAnimationActive && circleAnimationStartTime === null) {
+                circleAnimationActive = true;
+            }
+        } catch (e) {
+            console.error("Sound generation failed", e);
+            alert("Failed to generate sound.");
+        }
+    } else {
+        stopScarySound();
+        isPlaying = false;
+        audioToggle.textContent = '🔊';
+        audioToggle.style.background = 'rgba(255,100,0,0.3)';
+    }
+});
+</script>
+</body>
+</html>
